@@ -1,0 +1,246 @@
+/**
+ * # haptic-js
+ *
+ * Lightweight haptic feedback for web apps. Triggers tactile feedback on supported devices
+ * so users get a physical response when they tap buttons, confirm actions, or hit errors.
+ *
+ * ## How it works
+ *
+ * - **Android & supported desktop:** Uses the [Vibration API](https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API)
+ *   (`navigator.vibrate`) to run vibration patterns you define.
+ * - **iOS Safari 17.4+:** The Vibration API is not available. This module uses a hidden
+ *   `input[switch]` element and programmatically toggles it; iOS plays its native switch haptic
+ *   when that happens. No audio, no extra permissions.
+ *
+ * If the environment doesn’t support either (e.g. old browsers or SSR), all functions no-op
+ * and never throw.
+ *
+ * @module haptic
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API
+ */
+
+/**
+ * Describes a single vibration or a pattern of vibrations and pauses.
+ *
+ * - **Single number:** Vibration duration in milliseconds (e.g. `50` = vibrate for 50ms).
+ * - **Array:** Alternating [vibrate, pause, vibrate, pause, ...] in milliseconds.
+ *   Example: `[10, 50, 10]` = vibrate 10ms, pause 50ms, vibrate 10ms (double tap).
+ */
+export type VibrationPattern = number | number[];
+
+/**
+ * Type of the default export: an object with all haptic methods.
+ * Use this when you need to type a variable that holds the default import.
+ *
+ * @example
+ * import Haptic, { type Haptic } from "haptic-js";
+ * const feedback: Haptic = Haptic;
+ */
+export interface Haptic {
+  hasVibration(): boolean;
+  isSupported(): boolean;
+  vibrate(pattern: VibrationPattern): void;
+  light(): void;
+  medium(): void;
+  heavy(): void;
+  success(): void;
+  warning(): void;
+  error(): void;
+}
+
+const PRESETS = {
+  light: 10,
+  medium: 20,
+  heavy: 40,
+  success: [10, 50, 10],
+  warning: [30, 30, 30],
+  error: [50, 30, 50, 30, 50],
+} as const;
+
+const hasVibrationAPI = (): boolean =>
+  typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+
+const hasDOM = (): boolean =>
+  typeof document !== "undefined" && !!document.body;
+
+const fireIOSSwitch = (): void => {
+  if (!hasDOM()) return;
+  try {
+    const label = document.createElement("label");
+    label.setAttribute("aria-hidden", "true");
+    label.style.cssText =
+      "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.setAttribute("switch", "");
+    label.appendChild(input);
+    document.body.appendChild(label);
+    label.click();
+    document.body.removeChild(label);
+  } catch {
+    // no-op
+  }
+};
+
+const toPatternArray = (pattern: VibrationPattern): number[] =>
+  Array.isArray(pattern) ? [...pattern] : [pattern];
+
+const trigger = (pattern: VibrationPattern): void => {
+  if (hasVibrationAPI()) {
+    try {
+      const p = Array.isArray(pattern) ? [...pattern] : pattern;
+      navigator.vibrate(p);
+    } catch {
+      // no-op
+    }
+    return;
+  }
+
+  const arr = toPatternArray(pattern);
+  let delay = 0;
+  for (let i = 0; i < arr.length; i += 2) {
+    const vibrateMs = arr[i] ?? 0;
+    const pauseMs = arr[i + 1] ?? 0;
+    if (vibrateMs > 0) setTimeout(fireIOSSwitch, delay);
+    delay += vibrateMs + pauseMs;
+  }
+};
+
+/**
+ * Checks whether the **Vibration API** is available on this environment.
+ *
+ * Returns `true` on Android and some desktop browsers that support
+ * `navigator.vibrate`. Returns `false` on iOS Safari (which doesn’t implement
+ * the Vibration API); on iOS you can still use the other functions—they will
+ * use the switch-based fallback when this returns `false`.
+ *
+ * @returns `true` if `navigator.vibrate` is a function, otherwise `false`
+ *
+ * @example
+ * if (hasVibration()) {
+ *   console.log("Using device vibration");
+ * } else {
+ *   console.log("Using iOS switch fallback or no feedback");
+ * }
+ */
+export const hasVibration = (): boolean => hasVibrationAPI();
+
+/**
+ * Checks whether **any** haptic feedback can be triggered in this environment.
+ *
+ * Returns `true` if either the Vibration API is available or we’re in a browser
+ * with a DOM (so the iOS switch fallback can run). Use this to decide whether
+ * to show “haptic” UI or to call the feedback functions at all. In SSR or
+ * unsupported environments this returns `false` and all feedback calls no-op.
+ *
+ * @returns `true` when feedback can be triggered, `false` when it will be a no-op
+ *
+ * @example
+ * if (isSupported()) {
+ *   light(); // will do something
+ * } else {
+ *   // optional: show a message or skip haptic-only UI
+ * }
+ */
+export const isSupported = (): boolean => {
+  if (typeof navigator === "undefined" || typeof document === "undefined") return false;
+  return hasVibrationAPI() || hasDOM();
+};
+
+/**
+ * Triggers a custom haptic pattern.
+ *
+ * Use this when the preset patterns (light, success, error, etc.) aren’t enough.
+ * On Vibration API devices the pattern is passed through to `navigator.vibrate`.
+ * On iOS the pattern is interpreted as a sequence of pulses: each “vibrate”
+ * segment triggers one switch toggle, with pauses between them.
+ *
+ * @param pattern - Either a single duration in ms, or an array of
+ *   [vibrate, pause, vibrate, pause, ...] in ms. Pause values are used as delays
+ *   between pulses; they don’t trigger vibration themselves.
+ * @returns Nothing. Never throws; unsupported environments no-op.
+ *
+ * @example
+ * vibrate(100);                    // one 100ms vibration
+ * vibrate([10, 50, 10]);            // double tap
+ * vibrate([20, 40, 20, 40, 20]);    // triple tap with short gaps
+ */
+export const vibrate = (pattern: VibrationPattern): void => trigger(pattern);
+
+/**
+ * Triggers a short, light tap.
+ *
+ * Best for subtle feedback: selection changes, toggles, or gentle confirmation.
+ * Equivalent to a single 10ms vibration.
+ */
+export const light = (): void => trigger(PRESETS.light);
+
+/**
+ * Triggers a medium-strength tap.
+ *
+ * Good for standard button presses and list item taps. Equivalent to a single
+ * 20ms vibration.
+ */
+export const medium = (): void => trigger(PRESETS.medium);
+
+/**
+ * Triggers a strong tap.
+ *
+ * Use for important actions (e.g. submit, delete) where you want a more
+ * noticeable response. Equivalent to a single 40ms vibration.
+ */
+export const heavy = (): void => trigger(PRESETS.heavy);
+
+/**
+ * Triggers a double-tap pattern (short, pause, short).
+ *
+ * Suggests “success” or “done”—e.g. after saving, completing a step, or
+ * confirming a choice. Pattern: 10ms, 50ms pause, 10ms.
+ */
+export const success = (): void => trigger([...PRESETS.success]);
+
+/**
+ * Triggers a triple-tap pattern.
+ *
+ * Suggests “warning” or “attention”—e.g. before a destructive action or when
+ * something needs the user’s notice. Pattern: three 30ms pulses with 30ms
+ * pauses between them.
+ */
+export const warning = (): void => trigger([...PRESETS.warning]);
+
+/**
+ * Triggers a longer, more urgent pattern (five pulses).
+ *
+ * Use for errors, failures, or critical alerts where you want the user to
+ * clearly notice the feedback. Pattern: 50ms, 30ms pause, 50ms, 30ms pause, 50ms.
+ */
+export const error = (): void => trigger([...PRESETS.error]);
+
+const Haptic: Haptic = {
+  hasVibration,
+  isSupported,
+  vibrate,
+  light,
+  medium,
+  heavy,
+  success,
+  warning,
+  error,
+};
+
+/**
+ * Default export: use as `Haptic` for a clear, namespace-style API.
+ *
+ * @example
+ * import Haptic from "haptic-js";
+ *
+ * const App = () => {
+ *   const supported = Haptic.isSupported();
+ *   return (
+ *     <button onClick={() => Haptic.heavy()}>
+ *       Tap me
+ *     </button>
+ *   );
+ * };
+ */
+export default Haptic;

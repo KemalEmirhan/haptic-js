@@ -1,0 +1,10 @@
+# Only dist/ is published (see "files" in package.json).
+# Ignore dev and tooling so they never slip into the tarball.
+src/
+node_modules/
+*.tsbuildinfo
+.git/
+.gitignore
+.env*
+*.log
+.DS_Store

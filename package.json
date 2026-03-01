@@ -1,0 +1,42 @@
+{
+  "name": "haptic-js",
+  "version": "1.0.0",
+  "description": "Lightweight haptic feedback for JS (Vibration API + iOS Safari switch fallback). No deps.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "bun run clean && tsc",
+    "prepublishOnly": "bun run build"
+  },
+  "packageManager": "bun",
+  "keywords": [
+    "haptic",
+    "vibration",
+    "vibrate",
+    "ios",
+    "safari",
+    "feedback",
+    "mobile",
+    "vibration-api"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
