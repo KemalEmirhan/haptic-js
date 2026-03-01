@@ -1,6 +1,6 @@
 {
   "name": "browser-haptic",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Lightweight haptic feedback for JS (Vibration API + iOS Safari switch fallback). No deps.",
   "type": "module",
   "main": "dist/index.js",
