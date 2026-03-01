@@ -7,10 +7,6 @@ Lightweight haptic feedback for JavaScript. This repo uses **Bun**. Uses the [Vi
 From npm (use your package manager):
 
 ```bash
-bun add browser-haptic
-```
-
-```bash
 npm install browser-haptic
 ```
 
