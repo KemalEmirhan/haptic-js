@@ -64,6 +64,12 @@ On iOS Safari 17.4+, `isSupported()` is `true` but `hasVibration()` is `false`; 
 bun test
 ```
 
+Coverage (enforces 80% lines and functions):
+
+```bash
+bun run coverage
+```
+
 ## Contributing
 
 Contributions are welcome. To get started:

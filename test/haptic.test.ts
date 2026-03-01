@@ -135,6 +135,45 @@ describe("haptic", () => {
     });
   });
 
+  describe("iOS switch fallback (no Vibration API, with DOM)", () => {
+    test("trigger calls fireIOSSwitch via setTimeout when document.body exists", async () => {
+      const appendChild = mock(() => {});
+      const removeChild = mock(() => {});
+      const click = mock(() => {});
+      const mockInput = { type: "", setAttribute: () => {} };
+      const mockLabel = {
+        setAttribute: () => {},
+        style: { cssText: "" },
+        appendChild: () => {},
+        click: click as () => void,
+        removeChild: () => {},
+      };
+      const createElement = mock((...args: unknown[]) => (args[0] === "label" ? mockLabel : mockInput));
+      const body = { appendChild: appendChild as (node: unknown) => void, removeChild: removeChild as (node: unknown) => void };
+      const doc = { body, createElement };
+      setGlobals({ vibrate: null }, doc as unknown as DocumentLike);
+      vibrate(10);
+      await new Promise((r) => setTimeout(r, 50));
+      expect(createElement).toHaveBeenCalledWith("label");
+      expect(createElement).toHaveBeenCalledWith("input");
+      expect(appendChild).toHaveBeenCalledWith(mockLabel);
+      expect(removeChild).toHaveBeenCalledWith(mockLabel);
+      expect(click).toHaveBeenCalledWith();
+    });
+
+    test("fireIOSSwitch catch block does not throw when DOM ops throw", async () => {
+      const doc = {
+        body: {},
+        createElement: () => {
+          throw new Error("createElement blocked");
+        },
+      };
+      setGlobals({ vibrate: null }, doc as unknown as DocumentLike);
+      vibrate(10);
+      await new Promise((r) => setTimeout(r, 50));
+    });
+  });
+
   describe("default export (Haptic)", () => {
     test.each(HAPTIC_METHODS.map((name) => [name]))("has method %s", (name) => {
       expect(typeof Haptic[name]).toBe("function");

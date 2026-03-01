@@ -1,0 +1,3 @@
+[test]
+# Fail if coverage is below threshold (used with: bun test --coverage)
+coverageThreshold = { lines = 0.90, functions = 0.90 }
