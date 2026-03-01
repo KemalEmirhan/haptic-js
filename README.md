@@ -81,4 +81,4 @@ For bugs or feature ideas, please open an issue first so we can discuss.
 
 ## License
 
-MIT Copyright (c) 2025 Emirhan Kemal Kosem
+MIT Copyright (c) 2026 Emirhan Kemal Kosem
