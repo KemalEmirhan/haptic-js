@@ -1,13 +1,12 @@
 /**
  * Bump package.json version (patch | minor | major).
- * Usage: node scripts/bump.js [patch|minor|major]
+ * Usage: bun scripts/bump.js [patch|minor|major]
  */
-const fs = require("fs");
-const path = require("path");
+import path from "node:path";
 
-const pkgPath = path.join(__dirname, "..", "package.json");
-const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-const part = process.argv[2] || "patch";
+const pkgPath = path.join(import.meta.dir, "..", "package.json");
+const pkg = await Bun.file(pkgPath).json();
+const part = process.argv[2] ?? "patch";
 
 const [major, minor, patch] = pkg.version.split(".").map(Number);
 if (part === "major") {
@@ -18,5 +17,5 @@ if (part === "major") {
   pkg.version = `${major}.${minor}.${patch + 1}`;
 }
 
-fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+await Bun.write(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 console.log("Version bumped to", pkg.version);

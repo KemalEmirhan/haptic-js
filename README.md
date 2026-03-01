@@ -71,4 +71,4 @@ For bugs or feature ideas, please open an issue first so we can discuss.
 
 ## License
 
-MIT
+MIT Copyright (c) 2025 Emirhan Kemal Kosem

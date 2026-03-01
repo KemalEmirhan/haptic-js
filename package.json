@@ -1,6 +1,6 @@
 {
   "name": "browser-haptic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight haptic feedback for JS (Vibration API + iOS Safari switch fallback). No deps.",
   "type": "module",
   "main": "dist/index.js",
@@ -22,9 +22,9 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "bun run clean && tsc",
     "prepublishOnly": "bun run build",
-    "version:patch": "node scripts/bump.js patch",
-    "version:minor": "node scripts/bump.js minor",
-    "version:major": "node scripts/bump.js major",
+    "version:patch": "bun scripts/bump.js patch",
+    "version:minor": "bun scripts/bump.js minor",
+    "version:major": "bun scripts/bump.js major",
     "tag": "node -e \"const v=require('./package.json').version; require('child_process').execSync('git tag -a v'+v+' -m \\\"Release v'+v+'\\\"', {stdio:'inherit'})\""
   },
   "packageManager": "bun",
