@@ -22,10 +22,9 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "bun run clean && tsc",
     "prepublishOnly": "bun run build",
-    "version:patch": "bun scripts/bump.js patch",
-    "version:minor": "bun scripts/bump.js minor",
-    "version:major": "bun scripts/bump.js major",
-    "tag": "node -e \"const v=require('./package.json').version; require('child_process').execSync('git tag -a v'+v+' -m \\\"Release v'+v+'\\\"', {stdio:'inherit'})\""
+    "version:patch": "./scripts/bump.sh patch",
+    "version:minor": "./scripts/bump.sh minor",
+    "version:major": "./scripts/bump.sh major"
   },
   "packageManager": "bun",
   "keywords": [
